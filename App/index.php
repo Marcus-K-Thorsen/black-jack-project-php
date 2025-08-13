@@ -2,42 +2,41 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/View/PrintService.php';
+require_once __DIR__ . '/Model/DeckModel.php';
+require_once __DIR__ . '/Model/CardModel.php';
 
 use App\View\PrintService;
+use App\Model\Deck;
+use App\View\Color;
 
 $printer = new PrintService();
+$deck = new Deck();
 
-
-$printer->printRedMessage("Starting PHP project.");
-
-$name = $printer->requestTextInput("Please enter your name", true);
-
-$printer->printBlueMessage("Hello $name!", true);
+$printer->printMessage("Starting PHP project.", Color::GREEN);
 
 $playActions = ['play', 'P'];
+$shuffleActions = ['shuffle', 'S'];
 $exitActions = ['exit', 'E'];
-$actionGroups = [$playActions, $exitActions];
+$actionGroups = [$playActions, $shuffleActions, $exitActions];
 $actions = array_merge(...$actionGroups);
 
 
 $isRequestingAction = true;
 
 do {
-    $action = $printer->requestActionInput("Please choose an action 'play' or 'exit'", $actionGroups);
-    $isRequestingAction = false;
-
+    $action = $printer->requestActionInput("Please choose an action 'play', 'shuffle' or 'exit'", $actionGroups);
+    
     if (in_array($action, $playActions, true)) {
-        $printer->printGreenMessage("Starting a new game...", true);
+        $printer->printMessage("Starting a new game...", lineBreak: true);
+        $drawnCard = $deck->drawCard();
+        $printer->printMessage("You drew a card: " . $drawnCard->asString(), Color::BLUE, true);
+    } elseif (in_array($action, $shuffleActions, true)) {
+        $deck->shuffle();
+        $printer->printMessage("Shuffling the deck...", Color::GREEN, true);
     } elseif (in_array($action, $exitActions, true)) {
-        $printer->printYellowMessage("Exiting the game...", true);
+        $printer->printMessage("Exiting the game...", Color::YELLOW, true);
+        $isRequestingAction = false;
     } else {
-        $printer->printRedMessage("Invalid action '$action' selected, allowed actions are: " . implode(", ", $actions), true);
-        $isRequestingAction = true;
+        $printer->printMessage("Invalid action '$action' selected, allowed actions are: " . implode(", ", $actions), Color::RED, true);
     }
 } while ($isRequestingAction);
-
-$number = $printer->requestNumberInput("Please enter a number between 1 and 10", 1, 10);
-
-$printer->printCyanMessage("You entered the number: $number", true);
-
-$printer->printMagentaMessage("Ending the PHP project.", true);
